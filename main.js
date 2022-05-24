@@ -11,7 +11,6 @@ const road = new Road({
 const car = new Car({ x: road.getLaneCenter(2), y: 100, width: 30, height: 50 })
 
 
-
 _process__render()
 
 

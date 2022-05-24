@@ -26,3 +26,18 @@ function getIntersection(a, b, c, d) {
 
     return null
 }
+
+function polygonIntersection(polyA, polyB) {
+    for (let i = 0; i < polyA.length; i++) {
+        for (let k = 0; k < polyB.length; k++) {
+            const touch = getIntersection(
+                polyA[i],
+                polyA[(i + 1) % polyA.length],
+                polyB[k],
+                polyB[(k + 1) % polyB.length]
+            )
+            if (touch) return true
+        }
+    }
+    return false
+}

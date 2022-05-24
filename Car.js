@@ -4,12 +4,14 @@ class Car {
         this.y = y
         this.width = width
         this.height = height
+        this.polygon
 
         this.speed = 0
         this.maxSpeed = 3
         this.maxReverseSpeed = this.maxSpeed / 2
         this.acceleration = 0.2
         this.friction = 0.05
+        this.damaged = false
 
         //Note: in this case, since the y(0) is upwards
         //the unit circle 0 value is also upwards (-90deg)
@@ -21,18 +23,14 @@ class Car {
     }
 
     //Fix this after for a proper movement setup
-    //Such as:
-    //adding a x and y velocity
-    //a vector2D
-    //normalize function for the vector if such
-    //adding a speed variable
-    //multiplying the values by the speed
     //MAYBE(HARD MAYBE) adding a Delta for fps fluctuations
     //changing all the values of x and y to change only by 1
-    //okay, the tutorial guy is simply a freaking beast and he will teach all of this
-    // i think i can rest my neurons now lol
     update(roadBorders) {
-        this.#move()
+        if (!this.damaged) {
+            this.#move()
+            this.polygon = this.#polygonPoints()
+            this.damaged = this.#assessDamage(roadBorders)
+        }
         this.sensor.update(roadBorders)
     }
 
@@ -81,26 +79,62 @@ class Car {
 
     }
 
+    #assessDamage(roadBorders) {
+        for (let i = 0; i < roadBorders.length; i++) {
+            if (polygonIntersection(this.polygon, roadBorders[i]))
+                return true
+        }
+        return false
+    }
+
+    /**
+     * Uses the width and height information
+     * to get the radius from the center to a
+     * corner (hypotenuse/2).
+     *   __c__
+     *   |  /
+     *  b| /h
+     *   |/
+     */
+    #polygonPoints() {
+        const points = []
+        const radius = Math.hypot(this.width, this.height) / 2
+        const alpha__angle = Math.atan2(this.width, this.height)
+
+        //top right
+        points.push({
+            x: this.x - Math.sin(this.angle - alpha__angle) * radius,
+            y: this.y - Math.cos(this.angle - alpha__angle) * radius
+        })
+        //top left
+        points.push({
+            x: this.x - Math.sin(this.angle + alpha__angle) * radius,
+            y: this.y - Math.cos(this.angle + alpha__angle) * radius
+        })
+        //bottom right
+        points.push({
+            x: this.x - Math.sin(Math.PI + this.angle - alpha__angle) * radius,
+            y: this.y - Math.cos(Math.PI + this.angle - alpha__angle) * radius
+        })
+        //bottom left
+        points.push({
+            x: this.x - Math.sin(Math.PI + this.angle + alpha__angle) * radius,
+            y: this.y - Math.cos(Math.PI + this.angle + alpha__angle) * radius
+        })
+        return points
+    }
+
     draw(ctx) {
 
-        ctx.save()
-        //sets the origin to a new x,y pos
-        ctx.translate(this.x, this.y)
-        //rotates to -this.angle
-        ctx.rotate(-this.angle)
-
+        if (this.damaged) ctx.fillStyle = 'gray'
+        else ctx.fillStyle = 'black'
 
         ctx.beginPath()
-        ctx.rect(
-            -this.width / 2,
-            -this.height / 2,
-            this.width,
-            this.height
-        )
+        ctx.moveTo(this.polygon[0].x, this.polygon[0].y)
+        for (let i = 1; i < this.polygon.length; i++) {
+            ctx.lineTo(this.polygon[i].x, this.polygon[i].y)
+        }
         ctx.fill()
-
-
-        ctx.restore()
 
         this.sensor.draw(ctx)
     }
