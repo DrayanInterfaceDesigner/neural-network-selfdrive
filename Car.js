@@ -16,6 +16,7 @@ class Car {
         //counter-clockwise
         this.angle = 0
 
+        this.sensor = new Sensor(this)
         this.controls = new Controls()
     }
 
@@ -30,8 +31,9 @@ class Car {
     //changing all the values of x and y to change only by 1
     //okay, the tutorial guy is simply a freaking beast and he will teach all of this
     // i think i can rest my neurons now lol
-    update() {
+    update(roadBorders) {
         this.#move()
+        this.sensor.update(roadBorders)
     }
 
     #move() {
@@ -62,12 +64,13 @@ class Car {
         if (this.speed !== 0) {
             //flips the controls backwards
             const flip = this.speed > 0 ? 1 : -1
+            const turnForce = 0.03
 
             if (this.controls.left) {
-                this.angle += 0.03 * flip
+                this.angle += turnForce * flip
             }
             if (this.controls.right) {
-                this.angle -= 0.03 * flip
+                this.angle -= turnForce * flip
             }
 
         }
@@ -96,6 +99,9 @@ class Car {
         )
         ctx.fill()
 
+
         ctx.restore()
+
+        this.sensor.draw(ctx)
     }
 }

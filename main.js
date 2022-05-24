@@ -17,7 +17,7 @@ _process__render()
 
 function _process__render() {
     // updates
-    car.update()
+    car.update(road.borders)
 
     //it also clears the canvas each frame(pft, javascript)
     simulationCanvas.height = window.innerHeight

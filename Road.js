@@ -37,7 +37,7 @@ class Road {
 
     draw(ctx) {
         ctx.lineWidth = 5
-        ctx.strokeStyle = "white"
+        ctx.strokeStyle = "#664c00"
 
         //takes the middle lanes
         for (let i = 1; i <= (this.laneCount - 1); i++) {
@@ -47,15 +47,6 @@ class Road {
                 i / this.laneCount
             )
 
-            // add dashes to the middle lanes
-            // if (i > 0 && i < this.laneCount) {
-
-            // }
-            // else {
-            //     ctx.strokeStyle = "white"
-            //     ctx.setLineDash([])
-            // }
-            ctx.strokeStyle = "#664c00"
             ctx.setLineDash([25, 25])
             ctx.beginPath()
             ctx.moveTo(x_coord_for_lane_division, this.top)
