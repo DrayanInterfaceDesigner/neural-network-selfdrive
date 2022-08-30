@@ -2,28 +2,32 @@ class Sensor {
     constructor(entity) {
         this.car = entity
         this.rayCount = 5
-        this.rayLength = 100 //px
-        this.raySpread = degrees(60)
+        this.rayLength = 150 //px
+        this.raySpread = degrees(90)
 
         this.rays = []
         this.ray_readings = []
     }
 
-    update(roadBorders) {
+    update(roadBorders, traffic) {
 
         this.#castRays()
         this.ray_readings = []
         for (let i = 0; i < this.rays.length; i++) {
             this.ray_readings.push(
-                this.#getReading(this.rays[i], roadBorders)
+                this.#getReading(
+                    this.rays[i],
+                    roadBorders,
+                    traffic
+                )
             )
         }
     }
 
-    #getReading(ray, roadBorders) {
+    #getReading(ray, roadBorders, traffic) {
         let touches = []
-        for (let i = 0; i < roadBorders.length; i++) {
 
+        for (let i = 0; i < roadBorders.length; i++) {
             const touch = getIntersection(
                 ray[0],
                 ray[1],
@@ -33,7 +37,21 @@ class Sensor {
             if (touch) {
                 touches.push(touch)
             }
+        }
 
+        for (let i = 0; i < traffic.length; i++) {
+            const polygon = traffic[i].polygon
+            for (let k = 0; k < polygon.length; k++) {
+                const touch = getIntersection(
+                    ray[0],
+                    ray[1],
+                    polygon[k],
+                    polygon[(k + 1) % polygon.length]
+                )
+                if (touch) {
+                    touches.push(touch)
+                }
+            }
         }
 
         if (touches.length == 0) return null

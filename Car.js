@@ -1,13 +1,14 @@
 class Car {
-    constructor({ x, y, width, height }) {
+    constructor({ x, y, width, height, controlType = 'DUMMY', maxSpeed = 2, sprite }) {
         this.x = x
         this.y = y
         this.width = width
         this.height = height
         this.polygon
+        this.sprite = sprite
 
         this.speed = 0
-        this.maxSpeed = 3
+        this.maxSpeed = maxSpeed
         this.maxReverseSpeed = this.maxSpeed / 2
         this.acceleration = 0.2
         this.friction = 0.05
@@ -18,20 +19,46 @@ class Car {
         //counter-clockwise
         this.angle = 0
 
-        this.sensor = new Sensor(this)
-        this.controls = new Controls()
+        this.useBrain = controlType == "AI"
+        if (this.useBrain) {
+            console.log('hi')
+        }
+
+        if (controlType !== 'DUMMY') {
+            this.sensor = new Sensor(this)
+
+            this.brain = new NeuralNetwork(
+                [this.sensor.rayCount, 6, 4]
+            )
+        }
+        this.controls = new Controls(controlType)
     }
 
     //Fix this after for a proper movement setup
     //MAYBE(HARD MAYBE) adding a Delta for fps fluctuations
     //changing all the values of x and y to change only by 1
-    update(roadBorders) {
+    update(roadBorders, traffic) {
         if (!this.damaged) {
             this.#move()
             this.polygon = this.#polygonPoints()
-            this.damaged = this.#assessDamage(roadBorders)
+            this.damaged = this.#assessDamage(roadBorders, traffic)
         }
-        this.sensor.update(roadBorders)
+
+        if (this.sensor) {
+            this.sensor.update(roadBorders, traffic)
+            const offsets = this.sensor.ray_readings.map(
+                sensor => sensor == null ? 0 : 1 - sensor.offset
+            )
+            const outputs = NeuralNetwork.feedForward(offsets, this.brain)
+            console.log(outputs)
+
+            if (this.useBrain) {
+                this.controls.forward = outputs[0]
+                this.controls.reverse = outputs[3]
+                this.controls.left = outputs[1]
+                this.controls.right = outputs[2]
+            }
+        }
     }
 
     #move() {
@@ -79,9 +106,13 @@ class Car {
 
     }
 
-    #assessDamage(roadBorders) {
+    #assessDamage(roadBorders, traffic) {
         for (let i = 0; i < roadBorders.length; i++) {
             if (polygonIntersection(this.polygon, roadBorders[i]))
+                return true
+        }
+        for (let i = 0; i < traffic.length; i++) {
+            if (polygonIntersection(this.polygon, traffic[i].polygon))
                 return true
         }
         return false
@@ -97,7 +128,7 @@ class Car {
      *   |/
      */
     #polygonPoints() {
-        const points = []
+        const points = new Array()
         const radius = Math.hypot(this.width, this.height) / 2
         const alpha__angle = Math.atan2(this.width, this.height)
 
@@ -127,7 +158,7 @@ class Car {
     draw(ctx) {
 
         if (this.damaged) ctx.fillStyle = 'gray'
-        else ctx.fillStyle = 'black'
+        else ctx.fillStyle = this.sprite
 
         ctx.beginPath()
         ctx.moveTo(this.polygon[0].x, this.polygon[0].y)
@@ -136,6 +167,6 @@ class Car {
         }
         ctx.fill()
 
-        this.sensor.draw(ctx)
+        if (this.sensor) this.sensor.draw(ctx)
     }
 }
